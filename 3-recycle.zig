@@ -59,9 +59,7 @@ const AllocateurRecycle = struct {
         // traverse existing allocated region to find a free Header we can reuse
         const header_size = @sizeOf(Header);
 
-        // iterate over actual header positions: read header at `off`, then jump to
-        // the next header by advancing past this header + its payload (rounded
-        // up to header alignment). This avoids reading inside headers/payloads.
+        // starts reading from buffer at pos 0 till self.next to find available header
         var pos: usize = 0;
 
         while (pos + header_size <= self.next) {
@@ -76,6 +74,7 @@ const AllocateurRecycle = struct {
                 }
             }
 
+            //jump over current header size & payload to get to the next header
             const next_pos = std.mem.alignForward(usize, pos + header_size + header.len, header_align_bytes);
             pos = next_pos;
         }
