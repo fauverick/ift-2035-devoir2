@@ -45,7 +45,14 @@ const AllocateurPile = struct {
         const self: *AllocateurPile = @ptrCast(@alignCast(ctx));
 
         // calcule l'offset aligné depuis self.next
-        const start_pos = std.mem.alignForward(usize, self.next, alignment.toByteUnits());
+        const alignment_oct = alignment.toByteUnits();
+
+        const base_addr = @intFromPtr(self.buffer.ptr);
+
+        const aligned_addr = std.mem.alignForward(usize, base_addr + self.next, alignment_oct);
+        const start_pos = aligned_addr - base_addr;
+
+        //const start_pos = std.mem.alignForward(usize, self.next, alignment.toByteUnits());
 
         if (start_pos + len > self.buffer.len) {
             return null; // OutOfMemory
