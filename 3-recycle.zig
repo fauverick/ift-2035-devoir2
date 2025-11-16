@@ -57,6 +57,8 @@ const AllocateurRecycle = struct {
         // traverse existing allocated region to find a free Header we can reuse
         const header_size = @sizeOf(Header);
 
+        const base_addr = @intFromPtr(&self.buffer[0]);
+
         // starts reading from buffer at pos 0 till self.next to find available header
         var pos: usize = 0;
 
@@ -64,7 +66,8 @@ const AllocateurRecycle = struct {
             const header: *Header = @ptrCast(@alignCast(&self.buffer[pos]));
 
             if (header.free and header.len >= len) {
-                const payload_pos = std.mem.alignForward(usize, pos + header_size, alignment.toByteUnits());
+                const payload_abs = std.mem.alignForward(usize, base_addr + pos + header_size, alignment.toByteUnits());
+                const payload_pos = payload_abs - base_addr;
                 if (payload_pos + len <= self.next) {
                     header.free = false;
                     header.len = len;
@@ -73,12 +76,12 @@ const AllocateurRecycle = struct {
             }
 
             //jump over current header size & payload to get to the next header
-            const next_pos = std.mem.alignForward(usize, pos + header_size + header.len, header_align_bytes);
+            const next_abs = std.mem.alignForward(usize, base_addr + pos + header_size + header.len, header_align_bytes);
+            const next_pos = next_abs - base_addr;
             pos = next_pos;
         }
 
         // No reusable block found — append at the end. Align header relative to buffer start
-        const base_addr = @intFromPtr(&self.buffer[0]);
         const header_abs = std.mem.alignForward(usize, base_addr + self.next, header_align_bytes);
         const header_pos = header_abs - base_addr;
 
@@ -89,7 +92,9 @@ const AllocateurRecycle = struct {
         const header: *Header = @ptrCast(@alignCast(&self.buffer[header_pos]));
         header.* = Header{ .len = len, .free = false };
 
-        const payload_pos = std.mem.alignForward(usize, header_pos + header_size, alignment.toByteUnits());
+        const payload_abs = std.mem.alignForward(usize, base_addr + header_pos + header_size, alignment.toByteUnits());
+        const payload_pos = payload_abs - base_addr;
+
         self.next = payload_pos + len;
 
         return @ptrCast(@alignCast(&self.buffer[payload_pos]));
