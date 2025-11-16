@@ -70,7 +70,8 @@ const AllocateurEtiquette = struct {
         const header: *Header = @ptrCast(@alignCast(&self.buffer[header_pos]));
         header.* = Header{ .len = len, .free = false };
 
-        const payload_pos = std.mem.alignForward(usize, header_pos + header_size, alignment.toByteUnits());
+        const payload_abs = std.mem.alignForward(usize, base_addr + header_pos + header_size, alignment.toByteUnits());
+        const payload_pos = payload_abs - base_addr;
         self.next = payload_pos + len;
 
         return @ptrCast(@alignCast(&self.buffer[payload_pos]));

@@ -52,8 +52,6 @@ const AllocateurRecycle = struct {
         // par la suite, `self.buffer` et `self.next` désignent les deux
         // champs de l’allocateur
 
-        // (SUPPRIMER LES LIGNES SUIVANTES ET COMPLÉTER!)
-
         const header_align_bytes = header_alignment.toByteUnits();
 
         // traverse existing allocated region to find a free Header we can reuse
@@ -80,7 +78,9 @@ const AllocateurRecycle = struct {
         }
 
         // No reusable block found — append at the end. Align header relative to buffer start
-        const header_pos = std.mem.alignForward(usize, self.next, header_align_bytes);
+        const base_addr = @intFromPtr(&self.buffer[0]);
+        const header_abs = std.mem.alignForward(usize, base_addr + self.next, header_align_bytes);
+        const header_pos = header_abs - base_addr;
 
         if (header_pos + header_size + len > self.buffer.len) {
             return null;
