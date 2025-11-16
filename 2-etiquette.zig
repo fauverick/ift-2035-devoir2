@@ -55,7 +55,12 @@ const AllocateurEtiquette = struct {
         // (SUPPRIMER LES LIGNES SUIVANTES ET COMPLÉTER!)
 
         // calcule l'offset aligné depuis self.next
-        const header_pos = std.mem.alignForward(usize, self.next, header_alignment.toByteUnits());
+        // const header_pos = std.mem.alignForward(usize, self.next, header_alignment.toByteUnits());
+        const header_align_bytes = header_alignment.toByteUnits();
+        const base_addr = @intFromPtr(&self.buffer[0]);
+        const header_abs = std.mem.alignForward(usize, base_addr + self.next, header_align_bytes);
+        const header_pos = header_abs - base_addr;
+
         const header_size = @sizeOf(Header);
 
         if (header_pos + header_size + len > self.buffer.len) {
